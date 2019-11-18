@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.uplus.ledger.mapper.uplus_mapper">
+
+	
+	<select id="GetInterest" resultType="String">
+		select codes from tInterest where id = #{id}
+	</select>	
+	<insert id="InsertInterest">
+		INSERT INTO tInterest
+		( id, codes )
+  		VALUES
+		( 
+			  #{id}
+			, #{codes}
+		)
+	</insert>
+	<update id="UpdateInterest">
+		UPDATE tInterest
+  		SET
+  		  codes = #{codes}
+       	WHERE id = #{id}
+	</update>
+	
+	<select id="GetLoanHistoryAccept" resultType="hashmap">
+		select * from tLoanHistory where status = #{accept} order by registdate desc
+	</select>	
+	
+	<select id="GetLoanHistory" resultType="hashmap">
+		select * from tLoanHistory order by registdate desc
+	</select>	
+	
+	<select id="GetLoanHistoryId" resultType="hashmap">
+		select * from tLoanHistory where id = #{id} order by registdate desc
+	</select>	
+	
+	<select id="GetLoanMax" resultType="String">
+		select loanMax from tClient where id = #{id}
+	</select>	
+	
+	<select id="GetOverNightDays" resultType="long">
+		select OvernightDays from tClient where id = #{id}
+	</select>	
+
+	<select id="GetContractsUser" resultType="hashmap">
+		select ordnum, time, code as symbol, id, MerchandiseTypeID, 
+		CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID, volume, price, ( volume * price ) as amount, ov, ovtime from tOrderContract where id = #{id} PositionTypeID = 66 order by time, ordnum
+	</select>	
+	
+	<select id="GetOverNightMargin" resultType="long">
+		select value from tEnvironment where name = 'ENV_OVERNIGHT_DEPOSIT_STOCK'
+	</select>	
+	
+	<select id="GetTotalAmount" resultType="long">
+		select value from tEnvironment where name = 'ENV_OVERNIGHT_DEPOSIT_STOCK'
+	</select>	
+	
+	<select id="GetOverNightInfo" resultType="hashmap">
+		select securityRate, enableOvernight, bankBalance as bal, todayProfitRealized from tClient where id = #{id}
+	</select>
+	
+	<update id="UpdateOverNightStatus">
+		update tClient Set enableOvernight = #{status} where id = #{id}
+	</update>
+	
+	<select id="GetEachDayProfit" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_EachDayProfit #{id}, #{dateBegin}, #{dateEnd}, #{bIncludeTester}
+	</select> 
+	
+	<select id="GetOrderHistory" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_OrderHistory #{id}, #{dateBegin}, #{dateEnd}, #{bContractOnly}
+	</select> 
+
+	<select id="GetContractList" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_ContractList #{dateBegin}, #{dateEnd}, #{type}, #{filter}, #{bIncludeTester}, #{submanager}
+	</select> 
+	
+	<select id="GetProfitAllUser" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_EachDayProfitAllClient #{dateBegin}, #{dateEnd}, #{bIncludeTester}
+	</select> 
+	
+	<select id="GetTotalBankIO" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_TotalBankingIOSum #{dateBegin}, #{dateEnd}
+	</select> 
+	
+	<select id="GetRecommenderProfit" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_EachRecommenderProfit #{dateBegin}, #{dateEnd}
+	</select> 
+	
+	<select id="GetEachClientTotalProfit" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_EachClientTotalProfit #{dateBegin}, #{dateEnd}, #{whereColumn}, #{whereKey}, #{bIncludeTester}
+	</select> 
+	
+	<select id="GetOrderActionLog" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_OrderActionLog #{id}, #{dateBegin}, #{isMaster}
+	</select> 
+	
+	<select id="GetBankinIOHistory" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_GetBankingIOHistory #{BankingIOType}, #{accountType}, #{user}, #{queryField}, #{query}, #{dateBegin}, #{dateEnd}, #{submanager}
+	</select> 
+	
+	<select id="GetTodayProfitBalance" statementType="CALLABLE" resultType="hashmap">
+        EXEC usp_GetTodayProfitBalance #{whereColumn}, #{whereKey}, #{isIncludeTester}
+	</select> 
+	
+	<select id="GetOutStanding_1" resultType="hashmap">
+		select A.*, B.ClientLevelTypeID, B.Name from 
+			( select ordNum, CONVERT(CHAR(12), time, 114) as time, CONVERT(CHAR(8), time, 112) as date, code as symbol, id, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID,
+			  HogaTypeID, volOrder, volOutstd, price, MerchandiseTypeId from tOrderOutstanding ) as A,
+			( select * from tClient ) as B 
+		where A.id = B.id AND ((#{bIncludeTester} = 0 AND B.ClientLevelTypeID != 4 ) OR  (#{bIncludeTester} = 1))
+	</select>	
+	
+	<select id="GetOutStanding_2" resultType="hashmap">
+		select A.*, B.ClientLevelTypeID, B.Name from 
+			( select ordNum, CONVERT(CHAR(12), time, 114) as time, CONVERT(CHAR(8), time, 112) as date, code as symbol, id, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID,
+			  HogaTypeID, volOrder, volOutstd, price, MerchandiseTypeId from tOrderOutstanding ) as A,
+			( select * from tClient ) as B 
+		where A.id = B.id and A.id = #{id} order by ordNum
+	</select>	
+	
+	<select id="GetOutStanding_3" resultType="hashmap">
+		select A.*, B.ClientLevelTypeID, B.Name from 
+			( select ordNum, CONVERT(CHAR(12), time, 114) as time, CONVERT(CHAR(8), time, 112) as date, code as symbol, id, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID,
+			  HogaTypeID, volOrder, volOutstd, price, MerchandiseTypeId from tOrderOutstanding ) as A,
+			( select * from tClient where submanager = #{submanager} ) as B 
+		where A.id = B.id and ((#{bIncludeTester} = 0 AND B.ClientLevelTypeID != 4 ) OR  (#{bIncludeTester} = 1))
+	</select>
+	
+	<select id="GetOutStanding_4" resultType="hashmap">
+		select A.*, B.ClientLevelTypeID, B.Name from 
+			( select ordNum, CONVERT(CHAR(12), time, 114) as time, CONVERT(CHAR(8), time, 112) as date, code as symbol, id, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID, 
+			  HogaTypeID, volOrder, volOutstd, price, MerchandiseTypeId from tOrderOutstanding ) as A,
+			( select * from tClient where submanager = #{submanager} ) as B 
+		 where A.id = B.id and A.id = #{id} order by ordNum
+	</select>
+	
+	<select id="GetOrderPosition_NO_ID" resultType="hashmap">
+		select A.id,
+			   A.code as symbol, 
+			   A.ovtime, 
+			   A.MarketTypeID, 
+			   replace( convert( VARCHAR, convert( MONEY, A.price ), 1 ), '.00', '' ) as price, 
+			   replace( convert( VARCHAR, convert( MONEY, A.volume ), 1 ), '.00', '' ) as volume, 
+			   A.MerchandiseTypeID, 
+			   replace( convert( VARCHAR, convert( MONEY, A.currprice ), 1 ), '.00', '' ) as curprice,
+			   replace( convert( VARCHAR, convert( MONEY, A.profit ), 1 ), '.00', '' ) as profit, 
+			   A.ordNum, 
+			   A.time, 
+			   A.ov As remaining_ov, 
+			   0 as eval,
+			   ovtime,
+			   CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID,
+			   B.ClientLevelTypeID
+		from 
+			( select * from tOrderContract ) as A,
+			( select * from tClient ) as B
+		where A.id = B.id AND ((#{bIncludeTester} = 0 AND B.ClientLevelTypeID != 4 ) OR  (#{bIncludeTester} = 1))
+	</select>
+	
+	<select id="GetOrderPosition" resultType="hashmap">
+		select A.id,
+			   A.code as symbol, 
+			   A.ovtime, 
+			   A.MarketTypeID, 
+			   replace( convert( VARCHAR, convert( MONEY, A.price ), 1 ), '.00', '' ) as price, 
+			   replace( convert( VARCHAR, convert( MONEY, A.volume ), 1 ), '.00', '' ) as volume, 
+			   A.MerchandiseTypeID, 
+			   replace( convert( VARCHAR, convert( MONEY, A.currprice ), 1 ), '.00', '' ) as curprice,
+			   replace( convert( VARCHAR, convert( MONEY, A.profit ), 1 ), '.00', '' ) as profit, 
+			   A.ordNum, 
+			   A.time,  
+			   A.ov AS remaining_ov, 
+			   0 as eval,
+			   ovtime,			   
+			   CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID 
+		from tOrderContract as A where id = #{id} order by symbol
+	</select>
+	
+	<select id="CheckPassword" resultType="hashmap">
+		select id, password, ClientLevelTypeID, AccountStateTypeID from tClient where id = #{id}
+	</select>
+	
+	<select id="GetEnvironment" resultType="hashmap">
+		select * from tEnvironment
+	</select>
+
+	<select id="GetUserInfo" resultType="hashmap">
+		select *, (loanBalance + bankBalance) as totalBalance  from tClient where id = #{id}
+	</select>	
+	
+	<insert id="InsertEnv">
+		INSERT INTO tEnvironment
+		( name, value, league )
+  		VALUES
+		( 
+			  #{name}
+			, #{value}
+			, 'ALPHA'
+		)
+	</insert>	
+	
+	<insert id="InsertActionLog">
+		INSERT INTO tOrderActionLog
+		( id, ActorTypeId, action, contracts )
+  		VALUES
+		( 
+			  #{id}
+			, #{actor}
+			, #{action}
+			, #{memo}
+		)
+	</insert>
+	
+	<update id="UpdateLoginStatus">
+		UPDATE tClient
+  		SET
+  		  is_login = 1
+       	WHERE id = #{id}
+	</update>
+	
+	<select id="GetUserBankIO" resultType="hashmap">
+		select 	dateRequest, 
+				CASE WHEN status = '1' THEN '처리' ELSE '대기' END AS status, 
+				replace( convert( VARCHAR, convert( MONEY, amountRequest ), 1 ), '.00', '' ) as amountRequest, 
+				dateConfirm, 
+				replace( convert( VARCHAR, convert( MONEY, amountConfirm ), 1 ), '.00', '' ) as amountConfirm
+		from tBankingIO where id = #{id} and BankingIOType = #{banktype} AND 
+		CONVERT(VARCHAR, dateRequest, 23) <![CDATA[ >= ]]> #{dateBegin} AND CONVERT(VARCHAR, dateRequest, 23) <![CDATA[ <= ]]> #{dateEnd}
+	</select>
+	
+	<select id="GetContracts" resultType="hashmap">
+		select ordnum, time, code, id, MerchandiseTypeID, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID, volume, price, ( volume * price ) as amount, ov, ovtime from tOrderContract order by time, ordnum
+	</select>	
+	
+	<select id="GetOutStandings" resultType="hashmap">
+		select ordNum, time, code, id, CASE WHEN PositionTypeID = '66' THEN '매수' ELSE '매도' END AS PositionTypeID, 
+			   HogaTypeID, volOrder, volOutstd, price, MerchandiseTypeID, MarketTypeID, league
+		from tOrderOutstanding order by time, ordnum;
+	</select>
+	
+	<select id="GetOrder" resultType="hashmap">
+		select TOP 1 * from tOrder where date = #{date} and ordNum = #{ordNum} and ( OrderTypeID = 0 or OrderTypeID = 1)
+	</select>
+	
+	<select id="GetExceptionSymbol" resultType="hashmap">
+		select * from 
+		        ( 
+		        select A.id, A.type, A.code, A.expcode, A.name, A.etfchk, ISNULL(B.reason, 0) as reason, 
+		        ISNULL(B.reason_name, '''') as reason_name, ISNULL(B.use_yn, 0) as use_yn 
+		        from tStockCodeMaster as A LEFT OUTER JOIN 
+		        ( 
+		        select A.code, A.name, A.reason_name, A.reason, ISNULL(use_yn, 0) as use_yn from tFindItems as A 
+		        LEFT OUTER JOIN ( select * from tStockUseReason ) as B ON A.reason = B.reason 
+		        ) as B ON A.code = B.code 
+		        ) as C order by name
+	</select>	
+	
+	<select id="GetLastOrderNO" resultType="string">
+		select TOP 1 ordNum from tOrder where date = #{date} order by ordNum desc;
+	</select>
+	
+	<insert id="NewOrder">
+		EXEC usp_NewOrder #{id}, #{code}, #{MerchandiseTypeID}, #{MarketTypeID}, #{ordNum},
+						  #{date}, #{time}, #{PositionTypeID}, #{OrderTypeID}, #{HogaTypeID},
+						  #{volOrder}, #{volContract},
+						  #{priceOrder}, #{priceContract}, #{profit}, #{ordNumOrg}, #{ActorTypeID}, #{isRealContract}, #{RealOrdNum},
+						  #{league}, 
+						  #{Amount}, #{fee_processing}, #{fee_trading}, #{fee_closing}, #{fee_losscut}, #{fee_overnight}, #{tax}, 
+						  #{ClientLevelTypeID} 
+	</insert>
+	
+	<insert id="NewOutStanding">
+		INSERT INTO tOrderOutstanding
+			( code, id, ordNum, PositionTypeID, HogaTypeID, volOrder, volOutstd, price, nHogaIndexOnOrder, nRemainPreContractToOrder,
+		 	  cancelMode, realOrderOrdNum, MerchandiseTypeID, MarketTypeID, league )
+  		VALUES
+		( 
+			#{code}, 
+			#{id}, 
+			#{ordNum}, 
+			#{PositionTypeID}, 
+			#{HogaTypeID}, 
+			#{volOrder}, 
+			#{volOutstd}, 
+			#{price}, 
+			#{nHogaIndexOnOrder}, 
+			#{nRemainPreContractToOrder}, 
+			#{cancelMode}, 
+			#{realOrderOrdNum}, 
+			#{MerchandiseTypeID}, 
+			#{MarketTypeID}, 
+			#{league}
+		)
+	</insert>	
+	
+	<update id="UpdateOutStanding">
+		UPDATE tOrderOutstanding
+  		SET
+  		  ordNum = #{ordno},
+  		  price = #{price}
+       	WHERE ordNum = #{origin}
+	</update>	
+	
+	<delete id="RemoveOutStanding"> 
+		delete from tOrderOutstanding where ordNum = #{ordNum} 
+	</delete>
+	
+	<delete id="InitStopLoss"> 
+		delete from tStopLoss
+	</delete>
+	
+	<insert id="NewPosition">
+		INSERT INTO tOrderContract
+			( ordNum, 
+			  time, 
+			  code, 
+			  id, 
+			  PositionTypeID, 
+			  volume, 
+			  price, 
+			  MerchandiseTypeID, 
+			  MarketTypeID, 
+			  isReal, 
+			  league, 
+			  ov, 
+			  profit,
+			  ovtime, 
+			  currprice )
+  		VALUES
+		( 
+			  #{ordNum}, 
+			  #{time}, 
+			  #{code}, 
+			  #{id}, 
+			  #{PositionTypeID}, 
+			  #{volume}, 
+			  #{price}, 
+			  #{MerchandiseTypeID}, 
+			  #{MarketTypeID}, 
+			  #{isReal}, 
+			  #{league}, 
+			  #{ov}, 
+			  #{profit},
+			  #{ovtime}, 
+			  #{currprice}
+		)
+	</insert>
+	
+	<select id="GetPosition" resultType="Long">
+		select COUNT(*) from tOrderContract where id = #{id} and code = #{code}
+	</select>
+	
+	<select id="GetStopLoss" resultType="hashmap">
+		select * from tStopLoss
+	</select>
+
+	<update id="UpdatePosition">
+		UPDATE tOrderContract
+  		SET
+  		  volume = #{volume},
+  		  currprice = #{currprice},
+  		  profit = #{profit},
+  		  price = #{price}
+       	WHERE id = #{id} and code = #{code}
+	</update>	
+	
+	<delete id="RemovePosition"> 
+		delete from tOrderContract where id = #{id} and code = #{code}
+	</delete>
+	
+	<select id="GetHoliday" resultType="hashmap">
+		select info, CONVERT(VARCHAR, holiday, 112) as date from tHoliday
+	</select>
+	
+	<select id="GetUserList" resultType="hashmap">
+		select * from tClient
+	</select>
+	
+	<update id="UpdateProfit">
+		UPDATE tOrderContract
+  		SET
+  		  profit = #{profit},
+  		  currprice = #{currprice}
+       	WHERE id = #{id} and code = #{code}
+	</update>	
+	
+	<update id="UpdateOrderOutStandingCount">
+		UPDATE tOrderOutstanding
+  		SET
+  		  volOutStd = #{volOutStd}
+       	WHERE id = #{id} and code = #{code} and ordNum = #{ordno}
+	</update>
+	
+	<update id="UpdateClientProfit">
+		UPDATE tClient
+  		SET
+  		  bankBalance = #{bankBalance}, 
+  		  todayProfitRealized = #{todayProfitRealized}, 
+  		  todayFee = #{todayFee}
+  		where id = #{id};
+	</update>		
+	
+	<update id="InitDB">
+		EXEC usp_InitVTSDB #{league}
+	</update>
+    			
+	<update id="UpdateContract">
+		UPDATE tOrderContract
+  		SET
+  		  volume = #{volume},
+  		  price = #{price},
+  		  ov = #{ov},
+  		  ovtime = #{ovtime},
+  		  time = #{time}
+       	WHERE id = #{id} and code = #{code}
+	</update>	
+	
+	<insert id="InsertUserActionLog">
+		INSERT INTO tOrderActionLog
+		( 
+			id, 
+			ActorTypeID, 
+			action,
+			OrdNum,
+			code,
+			priceOrder,
+			PositionTypeID,
+			volOrder,
+			fee_processing,
+			
+			fee_trading,
+			fee_closing,
+			fee_losscut,
+			fee_overnight,
+			tax,
+			profit,
+			evalBalance,
+			contracts,
+			outstandings
+		 )
+  		VALUES
+		( 
+			  #{id}
+			, #{ActorTypeID}
+			, #{action}
+			, #{OrdNum}
+			, #{code}
+			, #{priceOrder}
+			, #{PositionTypeID}
+			, #{volOrder}
+			, #{fee_processing}
+			, #{fee_trading}
+			, #{fee_closing}
+			, #{fee_losscut}
+			, #{fee_overnight}
+			, #{tax}
+			, #{profit}
+			, #{evalBalance}
+			, #{contracts}
+			, #{outstandings}
+		)
+	
+	</insert>
+	
+	<update id="ClearUserData">
+		update tClient set bankBalance =0, todayFee = 0, loanBalance = 0, todayProfitRealized = 0,
+		last_bankBalance = 0, last_Fee = 0, last_loanBalance = 0, last_ProfitRealized = 0, loanprocess = 0 where id = #{id}
+	</update>
+	
+	<delete id="ClearPosition"> 
+		delete from tOrderContract where id = #{id} 
+	</delete>
+	
+	<delete id="ClearOutStanding"> 
+		delete from tOrderOutstanding where id = #{id} 
+	</delete>
+	
+	<delete id="ClearOrder"> 
+		delete from tOrder where id = #{id} 
+	</delete>
+	
+	<delete id="UnInstallStopLoss"> 
+		delete from tStopLoss where id = #{id} and code = #{symbol}
+	</delete>
+	
+	<delete id="UnInstallStopLossAll"> 
+		delete from tStopLoss
+	</delete>
+	
+	<update id="UpdateOVDays">
+		update tOrderContract set ov = #{ov}
+		where id = #{id} and code = #{symbol}
+	</update>
+	
+	<select id="GetRMSUserList" resultType="hashmap">
+		select * from tExceptSymbols
+	</select>			
+	
+</mapper>
